@@ -399,8 +399,10 @@ router.get('/dashboard', verifyToken, async (req, res) => {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             // Manual lookup since ref is mixed (Number vs ObjectId)
-            // Just protecting against missing books
+            // DEBUG LOGGING
+            console.log(`Looking up bookId: ${issue.bookId} (Type: ${typeof issue.bookId})`);
             const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
+            console.log(`Found:`, bookDetails ? bookDetails.title : 'NULL');
 
             return {
                 bookId: issue.bookId,
