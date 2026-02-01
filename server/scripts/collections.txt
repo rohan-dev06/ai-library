@@ -1,0 +1,13 @@
+Collections:
+- books: 6 documents
+- bookcontents: 0 documents
+- bookissues: 0 documents
+- notifications: 0 documents
+- highlights: 8 documents
+- readinglogs: 0 documents
+- subscribers: 1 documents
+- recommendations: 1 documents
+- payments: 155 documents
+- reviews: 2 documents
+- users: 2 documents
+- authors: 6 documents
