@@ -399,10 +399,9 @@ router.get('/dashboard', verifyToken, async (req, res) => {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             // Manual lookup since ref is mixed (Number vs ObjectId)
-            // DEBUG LOGGING
-            console.log(`Looking up bookId: ${issue.bookId} (Type: ${typeof issue.bookId})`);
             const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
-            console.log(`Found:`, bookDetails ? bookDetails.title : 'NULL');
+
+            if (!bookDetails) return null; // Filter out if book not found
 
             return {
                 bookId: issue.bookId,
@@ -416,6 +415,9 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 totalFinePaid: issue.fine // Assuming 'fine' field tracks accrued unpaid or total? For simply logic, treating as current accrued. 
             };
         }));
+
+        // Filter out any null entries (books that weren't found)
+        const validIssuedBooks = issuedBooksWithStatus.filter(b => b !== null);
 
         // Fetch Reading Log for Recommendations
         const readingHistory = await ReadingLog.find({ userId }).sort({ timeSpent: -1 });
@@ -531,7 +533,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
 
         res.json({
             coins: user.coins,
-            issuedBooks: issuedBooksWithStatus,
+            issuedBooks: validIssuedBooks,
             totalFines,
             recommendations: finalRecs
         });
