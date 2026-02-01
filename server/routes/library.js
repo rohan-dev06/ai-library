@@ -400,7 +400,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
 
             // Manual lookup since ref is mixed (Number vs ObjectId)
             // Just protecting against missing books
-            const bookDetails = await Book.findOne({ id: issue.bookId });
+            const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
 
             return {
                 bookId: issue.bookId,
