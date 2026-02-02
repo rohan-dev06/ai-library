@@ -28,10 +28,16 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (formData) => {
         try {
-            const res = await axios.post('/api/auth/register', formData);
+            // Add timeout of 20 seconds to handle cold starts but fail eventually
+            const res = await axios.post('/api/auth/register', formData, { timeout: 20000 });
             return { success: true, data: res.data };
         } catch (error) {
-            const msg = error.response?.data?.message || 'Registration failed';
+            let msg = error.response?.data?.message;
+            if (error.code === 'ECONNABORTED') {
+                msg = 'Request timed out. Server might be waking up (Cold Start). Please try again in 1 minute.';
+            } else if (!msg) {
+                msg = 'Registration failed. Please check your connection.';
+            }
             toast.error(msg);
             return { success: false, message: msg };
         }
@@ -39,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
     const verifyOtp = async (email, otp) => {
         try {
-            const res = await axios.post('/api/auth/verify-otp', { email, otp });
+            const res = await axios.post('/api/auth/verify-otp', { email, otp }, { timeout: 15000 });
 
             const { token, user } = res.data;
 
@@ -53,7 +59,13 @@ export const AuthProvider = ({ children }) => {
             toast.success('Verification successful! Logged in.');
             return true;
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Verification failed');
+            let msg = error.response?.data?.message;
+            if (error.code === 'ECONNABORTED') {
+                msg = 'Verification timed out. Please try again.';
+            } else if (!msg) {
+                msg = 'Verification failed.';
+            }
+            toast.error(msg);
             return false;
         }
     };

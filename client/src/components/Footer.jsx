@@ -59,14 +59,19 @@ const Footer = () => {
                     <div>
                         <h3 className="text-gray-900 dark:text-white font-semibold mb-6">Quick Links</h3>
                         <ul className="space-y-3">
-                            {['Home', 'Browse Books', 'My Dashboard', 'About Us'].map((item) => (
-                                <li key={item}>
+                            {[
+                                { name: 'Home', path: '/' },
+                                { name: 'Browse Books', path: '/browse' },
+                                { name: 'My Dashboard', path: '/dashboard' },
+                                { name: 'About Us', path: '#' } // Placeholder as no route exists
+                            ].map((item) => (
+                                <li key={item.name}>
                                     <Link
-                                        to={item === 'Home' ? '/' : `/${item.toLowerCase().replace(' ', '-')}`}
+                                        to={item.path}
                                         className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm transition-colors flex items-center gap-2 group"
                                     >
                                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50 opacity-0 group-hover:opacity-100 transition-all"></span>
-                                        {item}
+                                        {item.name}
                                     </Link>
                                 </li>
                             ))}

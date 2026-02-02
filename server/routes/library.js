@@ -264,12 +264,36 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
             }
         }
 
-        // Fetch updated active issues for frontend
+        // Fetch updated active issues and populate details for frontend state
         const updatedIssues = await BookIssue.find({ userId, status: { $in: ['issued', 'overdue'] } });
+
+        const issuedBooksWithStatus = await Promise.all(updatedIssues.map(async (issue) => {
+            const dueDate = new Date(issue.dueDate);
+            const diffTime = now - dueDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
+
+            if (!bookDetails) return null;
+
+            return {
+                bookId: issue.bookId,
+                title: bookDetails ? bookDetails.title : 'Unknown Title',
+                image: bookDetails ? bookDetails.image : '',
+                issueDate: issue.issueDate,
+                dueDate: issue.dueDate,
+                status: diffDays > 0 ? 'Overdue' : 'Active',
+                daysLeft: diffDays > 0 ? 0 : Math.abs(diffDays),
+                fine: issue.fine,
+                totalFinePaid: issue.fine
+            };
+        }));
+
+        const validIssuedBooks = issuedBooksWithStatus.filter(b => b !== null);
 
         res.json({
             coins: user.coins,
-            issuedBooks: updatedIssues, // Caution: Frontend might expect populated details
+            issuedBooks: validIssuedBooks,
             message,
             autoReturned: user.coins === 0 && totalDeducted > 0
         });
@@ -400,6 +424,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
 
             // Manual lookup since ref is mixed (Number vs ObjectId)
             const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
+            console.log(`Debug Issue: issueId=${issue._id}, bookId=${issue.bookId}, FoundBook=${!!bookDetails}, Title=${bookDetails?.title}`);
 
             if (!bookDetails) return null; // Filter out if book not found
 
@@ -613,8 +638,18 @@ router.post('/search/smart', upload.single('image'), async (req, res) => {
             }
         }
 
+        // Format results to match /books endpoint (flatten author object)
+        const formattedResults = stats.map(book => {
+            const b = book.toObject ? book.toObject() : book;
+            return {
+                ...b,
+                author: b.author && b.author.name ? b.author.name : 'Unknown',
+                // Keep original ID if needed, or other fields
+            };
+        });
+
         res.json({
-            results: stats,
+            results: formattedResults,
             analysis: {
                 query: searchQuery,
                 keywords: analysis.keywords,
