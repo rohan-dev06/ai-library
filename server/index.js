@@ -56,6 +56,9 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    // Verify SMTP Connection
+    const { verifyConfig } = require('./utils/sendEmail');
+    verifyConfig();
 });
 
 // Increase timeout to 10 minutes for large file uploads

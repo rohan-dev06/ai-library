@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const sendEmail = require('../utils/sendEmail');
+const { sendEmail } = require('../utils/sendEmail');
 
 // Register
 router.post('/register', async (req, res) => {
@@ -31,11 +31,14 @@ router.post('/register', async (req, res) => {
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         // Send OTP via Email
+        console.log(`Attempting to send OTP to ${email}...`);
         const emailSent = await sendEmail(email, 'Your Verification Code', `Your OTP is: ${otpCode}`);
 
         if (!emailSent) {
+            console.error(`Failed to send OTP to ${email}. Check server logs for exact error.`);
             return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
         }
+        console.log(`OTP sent successfully to ${email}`);
 
         const user = new User({
             username,
@@ -153,6 +156,7 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 
 // Forgot Password - Initiate
