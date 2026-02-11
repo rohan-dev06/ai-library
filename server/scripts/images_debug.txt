@@ -1,0 +1,10 @@
+Found Book: Think and Grow Rich
+Image URL: https://books.google.com/books/content?id=0eLbDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+
+--- All Books ---
+Title: Think and Grow Rich, Image: https://books.google.com/books/content?id=0eLbDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+Title: Structure and Interpretation of Computer Programs, second edition, Image: https://books.google.com/books/content?id=iL34DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api
+Title: Pride and Prejudice, Image: https://books.google.com/books/content?id=fuQDzQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+Title: Science and Hypothesis, Image: https://books.google.com/books/content?id=OA9SzNb7FpoC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api
+Title: Think Python, Image: https://books.google.com/books/content?id=1mZtP9H6OMQC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api
+Title: Think Python(2nd Edition), Image: https://books.google.com/books/content?id=lq4cswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api

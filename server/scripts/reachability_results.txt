@@ -1,0 +1,6 @@
+[FAIL - 429] Think and Grow Rich || URL: https://books.google.com/books/content?id=0eLbDwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+[200] OK - Structure and Interpretation of Computer Programs, second edition
+[FAIL - 429] Pride and Prejudice || URL: https://books.google.com/books/content?id=fuQDzQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+[FAIL - 429] Science and Hypothesis || URL: https://books.google.com/books/content?id=OA9SzNb7FpoC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api
+[200] OK - Think Python
+[FAIL - 429] Think Python(2nd Edition) || URL: https://books.google.com/books/content?id=lq4cswEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api

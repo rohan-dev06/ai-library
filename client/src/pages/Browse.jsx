@@ -44,9 +44,9 @@ const Browse = () => {
             setAiAnalysis(res.data.analysis);
 
             if (res.data.results.length === 0) {
-                toast("No books found matching your smart search.", { icon: '🤖' });
+                toast("No books found matching your smart search.", { icon: '🤖', id: 'smart-search-fail' });
             } else {
-                toast.success(`Found ${res.data.results.length} smart matches!`);
+                toast.success(`Found ${res.data.results.length} smart matches!`, { id: 'smart-search-success' });
             }
 
         } catch (error) {
@@ -61,9 +61,8 @@ const Browse = () => {
     useEffect(() => {
         if (location.state?.initialQuery) {
             handleSmartSearch({ query: location.state.initialQuery, type: 'text' });
-            // Optional: Clear state to prevent re-search? - react-router state persists.
-            // window.history.replaceState({}, document.title) // Bruteforce, or use navigate(., {replace: true, state: {}})
-            // But having it persist on refresh is actually nice.
+            // Clear state to prevent re-search on refresh/remount
+            navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location.state]);
 

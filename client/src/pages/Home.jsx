@@ -91,6 +91,10 @@ const Home = () => {
                                 <img
                                     src={book.image}
                                     alt={book.title}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://via.placeholder.com/300x450?text=No+Cover';
+                                    }}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
                                 <div className="absolute top-3 right-3 z-10">
