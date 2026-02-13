@@ -24,40 +24,40 @@ router.post('/register', async (req, res) => {
         }
 
         // Default role is 'user'
+        // Default role is 'user'
         let role = 'user';
-
-        // Generate OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-        // Send OTP via Email
-        console.log(`[AUTH] Attempting to send OTP to ${email}. Code: ${otpCode}`);
-        const emailSent = await sendEmail(email, 'Your Verification Code', `Your OTP is: ${otpCode}`);
-
-        if (!emailSent) {
-            console.error(`Failed to send OTP to ${email}. Check server logs for exact error.`);
-            return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
-        }
-        console.log(`OTP sent successfully to ${email}`);
 
         const user = new User({
             username,
             email,
             password,
             role,
-            otp: {
-                code: otpCode,
-                expiresAt: otpExpiresAt
-            }
+            isVerified: true
         });
 
         await user.save();
 
+        // Generate JWT
+        const token = jwt.sign(
+            { userId: user._id, username: user.username, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
         res.status(201).json({
-            message: 'Registration successful. Please verify OTP.',
-            email: email,
-            roleDetected: role // Inform frontend what role was detected
+            message: 'Registration successful.',
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                coins: user.coins,
+                issuedBooks: user.issuedBooks
+            }
         });
+
+
     } catch (error) {
         console.error('Registration error:', error, error.message, error.stack);
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -129,9 +129,7 @@ router.post('/login', async (req, res) => {
             return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
         }
 
-        if (!user.isVerified) {
-            return res.status(403).json({ message: 'Account not verified. Please verify OTP.' });
-        }
+
 
         // Generate JWT
         const token = jwt.sign(

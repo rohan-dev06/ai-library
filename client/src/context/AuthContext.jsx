@@ -30,6 +30,17 @@ export const AuthProvider = ({ children }) => {
         try {
             // Add timeout of 20 seconds to handle cold starts but fail eventually
             const res = await axios.post('/api/auth/register', formData, { timeout: 20000 });
+
+            const { token, user } = res.data;
+
+            if (token && user) {
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('user', JSON.stringify(user));
+                setToken(token);
+                setUser(user);
+                setIsAuthenticated(true);
+            }
+
             return { success: true, data: res.data };
         } catch (error) {
             let msg = error.response?.data?.message;
