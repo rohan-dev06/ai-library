@@ -28,6 +28,7 @@ const verifyConfig = async () => {
 
 const sendEmail = async (to, subject, text) => {
     try {
+        console.log(`Sending email to: ${to}, Subject: ${subject}`);
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to,
@@ -35,11 +36,12 @@ const sendEmail = async (to, subject, text) => {
             text
         };
 
-        await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully to:', to);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully. MessageID:', info.messageId);
         return true;
     } catch (error) {
         console.error('Error sending email:', error);
+        console.error('Stack:', error.stack);
         return false;
     }
 };

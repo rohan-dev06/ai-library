@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         // Send OTP via Email
-        console.log(`Attempting to send OTP to ${email}...`);
+        console.log(`[AUTH] Attempting to send OTP to ${email}. Code: ${otpCode}`);
         const emailSent = await sendEmail(email, 'Your Verification Code', `Your OTP is: ${otpCode}`);
 
         if (!emailSent) {

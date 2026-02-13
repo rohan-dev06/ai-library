@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
+console.log('DEBUG: Env Loaded. EMAIL_USER:', process.env.EMAIL_USER);
 console.log('DEBUG: Env Loaded. Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME || 'UNDEFINED');
 
 const app = express();
