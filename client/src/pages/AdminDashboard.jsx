@@ -84,7 +84,7 @@ const AdminDashboard = () => {
             formData.append('isbn', isbnInput);
 
             const res = await axios.post('/api/admin/add-book', formData, {
-                headers: { Authorization: token, 'Content-Type': 'multipart/form-data' },
+                headers: { Authorization: token },
                 timeout: 300000, // 5 minutes timeout
                 onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
