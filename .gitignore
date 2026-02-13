@@ -29,3 +29,9 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
+
+# Temporary Test Scripts
+server/utils/repro_dotenv.js
+server/utils/test_email_manual.js
+server/utils/test_email_hardcoded.js
+server/utils/verify_fix.js
