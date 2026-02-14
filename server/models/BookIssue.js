@@ -41,4 +41,9 @@ const bookIssueSchema = new mongoose.Schema({
     }
 });
 
+// compound index for common query pattern: finding all active issues for a user
+bookIssueSchema.index({ userId: 1, status: 1 });
+// index for book lookups
+bookIssueSchema.index({ bookId: 1 });
+
 module.exports = mongoose.model('BookIssue', bookIssueSchema);

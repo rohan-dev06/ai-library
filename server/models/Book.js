@@ -24,4 +24,9 @@ const bookSchema = new mongoose.Schema({
     // content moved to BookContent model
 });
 
+// Index for searching by tags (recommendations)
+bookSchema.index({ tags: 1 });
+// Index for searching by id (since we use custom id)
+bookSchema.index({ id: 1 }, { unique: true });
+
 module.exports = mongoose.model('Book', bookSchema);

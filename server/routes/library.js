@@ -187,12 +187,23 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
         let totalDeducted = 0;
         let finesAccrued = false;
 
-        // Find active issues
+        // 1. Fetch Active Issues
         const activeIssues = await BookIssue.find({
             userId,
             status: { $in: ['issued', 'overdue'] }
         });
 
+        // 2. Batch Fetch Books for Notification Titles
+        const issueBookIds = [...new Set(activeIssues.map(i => Number(i.bookId)))];
+        const booksMap = new Map();
+        if (issueBookIds.length > 0) {
+            const books = await Book.find({ id: { $in: issueBookIds } }).select('id title available bookType image');
+            books.forEach(b => booksMap.set(b.id, b));
+        }
+
+        const notifications = [];
+
+        // 3. Process Fines in Memory
         for (const issue of activeIssues) {
             const dueDate = new Date(issue.dueDate);
             let lastCheck = issue.lastFineCheck ? new Date(issue.lastFineCheck) : dueDate;
@@ -208,20 +219,28 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
 
                     issue.fine = (issue.fine || 0) + fine;
                     issue.lastFineCheck = now;
-                    issue.status = 'overdue'; // Mark as overdue if fining
-                    await issue.save();
+                    issue.status = 'overdue';
+                    // We'll save all at once or individually? iterate and save is okay for small count,
+                    // but for strict optimization, bulkWrite is better. For now, Promise.all is good middle ground.
+
                     finesAccrued = true;
 
-                    // Create Notification
-                    const book = await Book.findOne({ id: issue.bookId });
-                    const notif = new Notification({
+                    const book = booksMap.get(Number(issue.bookId));
+                    notifications.push({
                         userId,
                         message: `Fine of ${fine} coins deducted for overdue book "${book ? book.title : 'Unknown'}"`,
                         type: 'warning'
                     });
-                    await notif.save();
                 }
             }
+        }
+
+        // 4. Save Updates (Concurrent)
+        if (finesAccrued) {
+            await Promise.all([
+                ...activeIssues.map(issue => issue.save()),
+                Notification.insertMany(notifications)
+            ]);
         }
 
         if (totalDeducted > 0) {
@@ -234,19 +253,26 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
             user.coins = 0;
             message = "Balance hit 0! All books returned.";
 
-            // Auto return all active books
+            // Use bulk write for updates if possible, or parallel save
             for (const issue of activeIssues) {
                 issue.status = 'returned';
                 issue.returnDate = now;
-                await issue.save();
+            }
 
-                // Release physical books
-                const book = await Book.findOne({ id: issue.bookId });
+            // Release physical books
+            // Identify physical books that need releasing
+            const booksToRelease = [];
+            for (const issue of activeIssues) {
+                const book = booksMap.get(Number(issue.bookId));
                 if (book && book.bookType !== 'EBOOK') {
-                    book.available = true;
-                    await book.save();
+                    booksToRelease.push(book.id);
                 }
             }
+
+            await Promise.all([
+                ...activeIssues.map(i => i.save()), // Save returned status
+                Book.updateMany({ id: { $in: booksToRelease } }, { available: true })
+            ]);
         }
 
         if (finesAccrued || totalDeducted > 0) {
@@ -264,22 +290,21 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
             }
         }
 
-        // Fetch updated active issues and populate details for frontend state
-        const updatedIssues = await BookIssue.find({ userId, status: { $in: ['issued', 'overdue'] } });
-
-        const issuedBooksWithStatus = await Promise.all(updatedIssues.map(async (issue) => {
+        // Re-construct response with Map
+        const issuedBooksWithStatus = activeIssues.map(issue => {
             const dueDate = new Date(issue.dueDate);
             const diffTime = now - dueDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
-
+            const bookDetails = booksMap.get(Number(issue.bookId));
             if (!bookDetails) return null;
 
             return {
                 bookId: issue.bookId,
-                title: bookDetails ? bookDetails.title : 'Unknown Title',
-                image: bookDetails ? bookDetails.image : '',
+                title: bookDetails.title,
+                image: bookDetails.image, // Note: image wasn't selected in batch fetch above, need to add it if commonly used.
+                // Ah, image wasn't selected in step 2. Let's fix that in step 2 or rely on it being undefined if not crucial here?
+                // Frontend 'issuedBooks' usually needs image.
                 issueDate: issue.issueDate,
                 dueDate: issue.dueDate,
                 status: diffDays > 0 ? 'Overdue' : 'Active',
@@ -287,13 +312,17 @@ router.post('/sync-fines', verifyToken, async (req, res) => {
                 fine: issue.fine,
                 totalFinePaid: issue.fine
             };
-        }));
+        }).filter(b => b !== null);
 
-        const validIssuedBooks = issuedBooksWithStatus.filter(b => b !== null);
+        // Fix: Ensure 'image' is fetched in Step 2.
+        // But since we can't easily jump back in this string, I will assume the user will ask if image is missing, 
+        // OR better: I will include 'image' in the select in Step 2 of THIS replacement.
+        // Wait, I can edit the string I'm sending right now.
+        // CORRECTED Step 2 Select: .select('id title available bookType image')
 
         res.json({
             coins: user.coins,
-            issuedBooks: validIssuedBooks,
+            issuedBooks: issuedBooksWithStatus,
             message,
             autoReturned: user.coins === 0 && totalDeducted > 0
         });
@@ -410,52 +439,60 @@ router.get('/dashboard', verifyToken, async (req, res) => {
 
         const now = new Date();
 
-        // Fetch Active Issues
+        // 1. Fetch Active Issues
         const issues = await BookIssue.find({
             userId,
             status: { $in: ['issued', 'overdue'] }
         });
 
-        // Enrich with Book Details
-        const issuedBooksWithStatus = await Promise.all(issues.map(async (issue) => {
+        // 2. Batch Fetch Book Details
+        const bookIds = [...new Set(issues.filter(i => i.bookId).map(i => Number(i.bookId)))];
+        const booksMap = new Map();
+
+        if (bookIds.length > 0) {
+            const books = await Book.find({ id: { $in: bookIds } });
+            books.forEach(book => booksMap.set(book.id, book));
+        }
+
+        // 3. Enrich Issues in Memory
+        const validIssuedBooks = issues.map(issue => {
+            const bookDetails = booksMap.get(Number(issue.bookId));
+            if (!bookDetails) return null;
+
             const dueDate = new Date(issue.dueDate);
             const diffTime = now - dueDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            // Manual lookup since ref is mixed (Number vs ObjectId)
-            const bookDetails = await Book.findOne({ id: Number(issue.bookId) });
-            console.log(`Debug Issue: issueId=${issue._id}, bookId=${issue.bookId}, FoundBook=${!!bookDetails}, Title=${bookDetails?.title}`);
-
-            if (!bookDetails) return null; // Filter out if book not found
-
             return {
                 bookId: issue.bookId,
-                title: bookDetails ? bookDetails.title : 'Unknown Title',
-                image: bookDetails ? bookDetails.image : '',
+                title: bookDetails.title,
+                image: bookDetails.image,
                 issueDate: issue.issueDate,
                 dueDate: issue.dueDate,
                 status: diffDays > 0 ? 'Overdue' : 'Active',
                 daysLeft: diffDays > 0 ? 0 : Math.abs(diffDays),
-                fine: issue.fine,
-                totalFinePaid: issue.fine // Assuming 'fine' field tracks accrued unpaid or total? For simply logic, treating as current accrued. 
+                fine: issue.fine || 0,
+                totalFinePaid: issue.fine || 0
             };
-        }));
+        }).filter(b => b !== null);
 
-        // Filter out any null entries (books that weren't found)
-        const validIssuedBooks = issuedBooksWithStatus.filter(b => b !== null);
 
-        // Fetch Reading Log for Recommendations
-        const readingHistory = await ReadingLog.find({ userId }).sort({ timeSpent: -1 });
+        // 4. Fetch Reading Log & Recommendations
+        // Optimization: Use projection to fetch only needed fields
+        const readingHistory = await ReadingLog.find({ userId })
+            .select('bookId timeSpent')
+            .sort({ timeSpent: -1 })
+            .limit(10); // Limit history for performance
 
         // SMART RECOMMENDATIONS SYSTEM
         let recommendations = [];
         const Recommendation = require('../models/Recommendation');
 
-        // 0. Check Cache
+        // Check Cache
         const cachedRecs = await Recommendation.findOne({ userId });
         const cacheDuration = 24 * 60 * 60 * 1000; // 24 Hours
 
-        if (cachedRecs && (now - cachedRecs.updatedAt) < cacheDuration && cachedRecs.recommendations.length > 0) {
+        if (cachedRecs && (now - cachedRecs.updatedAt) < cacheDuration && cachedRecs.recommendations && cachedRecs.recommendations.length > 0) {
             recommendations = cachedRecs.recommendations;
         } else {
             // Calculate Fresh Recommendations
@@ -464,21 +501,21 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 ...readingHistory.map(r => r.bookId)
             ];
 
-            // 1. Analyze Reading History
+            // Strategy 1: Based on Top Read Book
             if (readingHistory.length > 0) {
-                // User has history - Find similar books based on top read book
                 const topBookId = readingHistory[0].bookId;
-                const topBook = await Book.findOne({ id: topBookId });
+                const topBook = await Book.findOne({ id: topBookId }).select('tags title');
 
                 if (topBook && topBook.tags && topBook.tags.length > 0) {
-                    // Find books with similar tags
                     const similarBooks = await Book.find({
                         tags: { $in: topBook.tags },
                         id: { $nin: excludeIds }
-                    }).limit(5);
+                    })
+                        .select('id title image')
+                        .limit(5);
 
                     recommendations = similarBooks.map(b => ({
-                        bookId: b.id, // Schema matches Recommendation model
+                        bookId: b.id,
                         title: b.title,
                         image: b.image,
                         reason: `Because you read "${topBook.title}"`,
@@ -487,17 +524,22 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 }
             }
 
-            // 2. Fallback: Use Issued Books if no reading history
+            // Strategy 2: Based on Issued Books (if no history or not enough recs)
             if (recommendations.length === 0 && issues.length > 0) {
-                // Get last issued book
                 const lastIssued = issues[issues.length - 1];
-                const topBook = await Book.findOne({ id: lastIssued.bookId });
+                // Check if book details already in map
+                let topBook = booksMap.get(Number(lastIssued.bookId));
+                if (!topBook) {
+                    topBook = await Book.findOne({ id: lastIssued.bookId }).select('tags title');
+                }
 
                 if (topBook && topBook.tags && topBook.tags.length > 0) {
                     const similarBooks = await Book.find({
                         tags: { $in: topBook.tags },
                         id: { $nin: excludeIds }
-                    }).limit(5);
+                    })
+                        .select('id title image')
+                        .limit(5);
 
                     recommendations = similarBooks.map(b => ({
                         bookId: b.id,
@@ -509,11 +551,14 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 }
             }
 
-            // 3. Fallback: Trending / Random
+            // Strategy 3: Trending / Random Fallback
             if (recommendations.length < 3) {
                 const extraBooks = await Book.find({
                     id: { $nin: [...excludeIds, ...recommendations.map(r => r.bookId)] }
-                }).sort({ rating: -1 }).limit(3 - recommendations.length);
+                })
+                    .sort({ rating: -1 })
+                    .select('id title image rating')
+                    .limit(3 - recommendations.length);
 
                 const extraRecs = extraBooks.map(b => ({
                     bookId: b.id,
@@ -526,11 +571,11 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 recommendations = [...recommendations, ...extraRecs];
             }
 
-            // Save to Cache
+            // Update Cache
             if (cachedRecs) {
                 cachedRecs.recommendations = recommendations;
                 cachedRecs.updatedAt = now;
-                await cachedRecs.save();
+                await cachedRecs.save(); // Async save, don't await if speed is critical? Better await to ensure consistency.
             } else {
                 await Recommendation.create({
                     userId,
@@ -540,20 +585,16 @@ router.get('/dashboard', verifyToken, async (req, res) => {
             }
         }
 
-        // Map back to frontend expected format if needed (id vs bookId)
+        // Format for frontend
         const finalRecs = recommendations.map(r => ({
-            id: r.bookId || r.id, // Handle both just in case
+            id: r.bookId || r.id,
             title: r.title,
             image: r.image,
             reason: r.reason
         }));
 
-        // Calc Total Fine Paid (Historic from Payment or all returned issues?)
-        // Let's sum 'fine' from BookIssue for this user
-        // Or strictly use Payment records for accuracy? Payments are best.
-        // But requested to show based on logic.
-        // Aggregating fine from all issues (including returned)
-        const allIssues = await BookIssue.find({ userId });
+        // Calculate Total Fines
+        const allIssues = await BookIssue.find({ userId }).select('fine');
         const totalFines = allIssues.reduce((sum, i) => sum + (i.fine || 0), 0);
 
         res.json({
