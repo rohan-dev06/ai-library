@@ -1,6 +1,5 @@
 const axios = require('axios');
 
-const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
 const base = "https://api-m.sandbox.paypal.com"; // Switch to live in production
 
 /**
@@ -8,8 +7,9 @@ const base = "https://api-m.sandbox.paypal.com"; // Switch to live in production
  */
 const generateAccessToken = async () => {
     try {
+        const { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = process.env;
         if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-            throw new Error("MISSING_API_CREDENTIALS");
+            throw new Error("MISSING_API_CREDENTIALS: Envs not loaded");
         }
         const auth = Buffer.from(
             PAYPAL_CLIENT_ID + ":" + PAYPAL_CLIENT_SECRET,
