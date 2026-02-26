@@ -512,7 +512,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                         id: { $nin: excludeIds }
                     })
                         .select('id title image')
-                        .limit(5);
+                        .limit(3);
 
                     recommendations = similarBooks.map(b => ({
                         bookId: b.id,
@@ -539,7 +539,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                         id: { $nin: excludeIds }
                     })
                         .select('id title image')
-                        .limit(5);
+                        .limit(3);
 
                     recommendations = similarBooks.map(b => ({
                         bookId: b.id,
@@ -583,6 +583,11 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                     updatedAt: now
                 });
             }
+        }
+
+        // Enforce absolute maximum of 3 items
+        if (recommendations.length > 3) {
+            recommendations = recommendations.slice(0, 3);
         }
 
         // Format for frontend
