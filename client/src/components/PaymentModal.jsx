@@ -1,44 +1,61 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { X, CreditCard, Smartphone, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, ShieldCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
     const [step, setStep] = useState('select'); // select, processing, success
-    const [selectedAmount, setSelectedAmount] = useState(500);
-    const [selectedMethod, setSelectedMethod] = useState('card');
+    const [selectedPackage, setSelectedPackage] = useState({ coins: 500, price: '4.50', label: '$4.50' });
 
     if (!isOpen) return null;
 
     const coinPackages = [
-        { coins: 100, price: '$1.00' },
-        { coins: 500, price: '$4.50', popular: true },
-        { coins: 1000, price: '$8.00' },
-        { coins: 5000, price: '$35.00' },
+        { coins: 100, price: '1.00', label: '$1.00' },
+        { coins: 500, price: '4.50', label: '$4.50', popular: true },
+        { coins: 1000, price: '8.00', label: '$8.00' },
+        { coins: 5000, price: '35.00', label: '$35.00' },
     ];
 
-    const handlePayment = async () => {
+    const createOrder = async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const res = await axios.post('/api/payment/paypal/create-order', {
+                price: selectedPackage.price
+            }, {
+                headers: { Authorization: token }
+            });
+            return res.data.id; // Return PayPal order ID
+        } catch (error) {
+            console.error("Order creation failed", error);
+            toast.error("Failed to initiate transaction");
+            throw error;
+        }
+    };
+
+    const onApprove = async (data) => {
         setStep('processing');
         try {
             const token = sessionStorage.getItem('token');
-            const res = await axios.post('/api/payment/create', {
-                amount: selectedAmount,
-                paymentMethod: selectedMethod
+            const res = await axios.post('/api/payment/paypal/capture-order', {
+                orderID: data.orderID,
+                coinsToFund: selectedPackage.coins,
+                priceLabel: selectedPackage.label
             }, {
                 headers: { Authorization: token }
             });
 
-            if (res.data) {
+            if (res.data && res.data.success) {
                 setStep('success');
                 setTimeout(() => {
                     onSuccess(res.data.coins); // Pass updated coins back
-                    toast.success(`Purchased ${selectedAmount} coins!`);
+                    toast.success(`Successfully purchased ${selectedPackage.coins} coins!`);
                     handleClose();
                 }, 1500);
             }
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message || "Payment failed");
+            toast.error(error.response?.data?.error || "Payment capture failed");
             setStep('select');
         }
     };
@@ -76,8 +93,8 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                                 {coinPackages.map(pkg => (
                                     <button
                                         key={pkg.coins}
-                                        onClick={() => setSelectedAmount(pkg.coins)}
-                                        className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedAmount === pkg.coins
+                                        onClick={() => setSelectedPackage(pkg)}
+                                        className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${selectedPackage.coins === pkg.coins
                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                             : 'border-gray-200 dark:border-white/10 hover:border-blue-200 dark:hover:border-white/30'
                                             }`}
@@ -87,58 +104,21 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                                         )}
                                         <span className="text-2xl font-bold text-gray-900 dark:text-white">{pkg.coins}</span>
                                         <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Coins</span>
-                                        <div className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400">{pkg.price}</div>
+                                        <div className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400">{pkg.label}</div>
                                     </button>
                                 ))}
                             </div>
 
-                            <h4 className="font-semibold mb-4 text-gray-900 dark:text-white">2. Payment Method</h4>
-                            <div className="space-y-3 mb-8">
-                                <button
-                                    onClick={() => setSelectedMethod('card')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${selectedMethod === 'card'
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-200 dark:border-white/10'
-                                        }`}
-                                >
-                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">
-                                        <CreditCard className="w-6 h-6" />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <div className="font-semibold text-gray-900 dark:text-white">Credit / Debit Card</div>
-                                        <div className="text-xs text-gray-500"> Visa, Mastercard, AMEX</div>
-                                    </div>
-                                    <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                                        {selectedMethod === 'card' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setSelectedMethod('upi')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${selectedMethod === 'upi'
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-200 dark:border-white/10'
-                                        }`}
-                                >
-                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600 dark:text-emerald-400">
-                                        <Smartphone className="w-6 h-6" />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <div className="font-semibold text-gray-900 dark:text-white">UPI / Wallets</div>
-                                        <div className="text-xs text-gray-500">Google Pay, PhonePe, Paytm</div>
-                                    </div>
-                                    <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                                        {selectedMethod === 'upi' && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
-                                    </div>
-                                </button>
+                            <div className="mt-6 w-full relative z-0">
+                                <PayPalScriptProvider options={{ "client-id": "AZIyktTeZtzUAPnubKQ6hkmqJdSFmGAl5Au2JgkYnhryYQcVeLUg8kLCFwBVV3HNnv2Io_f6HChL8UZs", components: "buttons", currency: "USD" }}>
+                                    <PayPalButtons
+                                        style={{ layout: "vertical", shape: "rect", color: "blue" }}
+                                        createOrder={createOrder}
+                                        onApprove={onApprove}
+                                        forceReRender={[selectedPackage.price]}
+                                    />
+                                </PayPalScriptProvider>
                             </div>
-
-                            <button
-                                onClick={handlePayment}
-                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95"
-                            >
-                                Pay Now
-                            </button>
                         </>
                     )}
 
@@ -156,7 +136,7 @@ const PaymentModal = ({ isOpen, onClose, onSuccess }) => {
                                 <ShieldCheck className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Payment Successful!</h4>
-                            <p className="text-gray-500 text-center">You have added {selectedAmount} coins to your wallet.</p>
+                            <p className="text-gray-500 text-center">You have added {selectedPackage.coins} coins to your wallet.</p>
                         </div>
                     )}
                 </div>
