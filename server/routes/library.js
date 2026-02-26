@@ -492,7 +492,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
         const cachedRecs = await Recommendation.findOne({ userId });
         const cacheDuration = 24 * 60 * 60 * 1000; // 24 Hours
 
-        if (cachedRecs && (now - cachedRecs.updatedAt) < cacheDuration && cachedRecs.recommendations && cachedRecs.recommendations.length > 0) {
+        if (cachedRecs && (now - cachedRecs.updatedAt) < cacheDuration && cachedRecs.recommendations && cachedRecs.recommendations.length >= 3) {
             recommendations = cachedRecs.recommendations;
         } else {
             // Calculate Fresh Recommendations
