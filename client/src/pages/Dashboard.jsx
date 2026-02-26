@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import { useLibrary } from '../context/LibraryContext';
 import Navbar from '../components/Navbar';
-import axios from 'axios';
 import { Clock, AlertCircle, BookOpen, Star, MessageSquare } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
-    const { token, user } = useAuth();
     const { returnBook, coins, issuedBooks, loadingBooks, recommendations } = useLibrary(); // Get live data including recommendations
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [messages, setMessages] = useState([
@@ -151,7 +147,7 @@ const Dashboard = () => {
                                     <button
                                         onClick={async (e) => {
                                             e.stopPropagation(); // Prevent navigation when clicking return
-                                            const success = await returnBook(book.bookId);
+                                            await returnBook(book.bookId);
                                             // Context updates automatically
                                         }}
                                         className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl font-semibold transition-colors flex-shrink-0 z-10">

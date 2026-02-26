@@ -30,7 +30,7 @@ const ReadBook = () => {
     const [highlights, setHighlights] = useState([]);
     const [showHighlightPanel, setShowHighlightPanel] = useState(false);
     const [selectedText, setSelectedText] = useState('');
-    const [highlightColor, setHighlightColor] = useState('#FFEB3B');
+    const [highlightColor] = useState('#FFEB3B');
     const lastTimeRef = useRef(Date.now());
     const toastShownRef = useRef(false); // Prevent double toasts
 
@@ -101,8 +101,7 @@ const ReadBook = () => {
                     const res = await axios.get(`/api/library/book/${id}/content?page=${pageNumber}`);
                     setTextContent(res.data);
                     if (res.data.totalPages) setNumPages(res.data.totalPages);
-                } catch (error) {
-                    // console.error("Fetch text error", error);
+                } catch {
                     // toast.error("Text content not available for this page");
                     setTextContent(null);
                 } finally {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLibrary } from '../context/LibraryContext';
 import Navbar from '../components/Navbar';
 import { Heart, Trash2, Star } from 'lucide-react';
@@ -8,12 +8,9 @@ import toast from 'react-hot-toast';
 const SavedBooks = () => {
     const { books } = useLibrary();
     const navigate = useNavigate();
-    const [savedBooks, setSavedBooks] = useState([]);
-
-    useEffect(() => {
-        const savedIds = JSON.parse(localStorage.getItem('savedBooks') || '[]');
-        setSavedBooks(savedIds);
-    }, []);
+    const [savedBooks, setSavedBooks] = useState(() => {
+        return JSON.parse(localStorage.getItem('savedBooks') || '[]');
+    });
 
     const handleRemove = (bookId) => {
         const updated = savedBooks.filter(id => id !== bookId);

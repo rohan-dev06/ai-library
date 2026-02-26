@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Star, Book, Clock, Globe, Share2, Heart } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -16,13 +15,14 @@ const BookDetails = () => {
     const { isAuthenticated } = useAuth();
     const book = books.find(b => b.id === parseInt(id));
     const [stats, setStats] = useState({ average: 0, total: 0 });
-    const [progress, setProgress] = useState(null);
+    const [progress] = useState(null);
     const [isSaved, setIsSaved] = useState(false);
 
     // Check if book is saved on mount
     useEffect(() => {
         if (book) {
             const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '[]');
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsSaved(savedBooks.includes(book.id));
         }
     }, [book]);
@@ -33,36 +33,10 @@ const BookDetails = () => {
             navigate('/');
             return;
         }
-        if (book) {
-            setStats({ average: 0, total: 0 }); // Will be updated by ReviewSection
-
-            // Fetch progress if logged in
-            if (isAuthenticated) {
-                // We need to fetch progress from API since user object might be stale or not contain it detailed
-                // Actually, user object in context *could* have it if we synced it.
-                // But let's fetch fresh to be sure.
-                // OR we can just use a useEffect to fetch it.
-            }
-        }
         window.scrollTo(0, 0);
     }, [book, loadingBooks, navigate, isAuthenticated]);
 
-    // Fetch Progress separately
-    useEffect(() => {
-        const fetchProgress = async () => {
-            if (isAuthenticated && book) {
-                try {
-                    // Import axios if not imported... wait check imports
-                    // We need axios. Let's assume it's imported or I will need to check imports.
-                    // Checking imports... imports are at top. I need to make sure axios is imported.
-                    // It is NOT in the current file view. I should probably add it or use a helper.
-                    // Actually, I'll add axios import in a separate step if needed, but wait, ReviewSection uses it.
-                    // BookDetails doesn't seem to have axios import.
-                    // I will check imports first.
-                } catch (e) { console.error(e); }
-            }
-        };
-    }, []);
+    // Fetch Progress separately handled in ReadBook
 
     if (loadingBooks) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
     if (!book) {
@@ -153,7 +127,7 @@ const BookDetails = () => {
             try {
                 await navigator.clipboard.writeText(shareUrl);
                 toast.success('Link copied to clipboard!');
-            } catch (error) {
+            } catch {
                 toast.error('Failed to copy link');
             }
         }

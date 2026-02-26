@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLibrary } from '../context/LibraryContext';
-import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Search, Filter, BookOpen, Star, Sparkles } from 'lucide-react';
@@ -11,7 +10,6 @@ import axios from 'axios';
 
 const Browse = () => {
     const { books, hasIssued, issueBook, loadingBooks } = useLibrary();
-    const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -64,7 +62,7 @@ const Browse = () => {
             // Clear state to prevent re-search on refresh/remount
             navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state]);
+    }, [location.state, location.pathname, navigate]);
 
 
     const handleCategoryFilter = (category) => {

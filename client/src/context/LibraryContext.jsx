@@ -68,7 +68,7 @@ export const LibraryProvider = ({ children }) => {
                         fetchBooks();
                         toast.error(res.data.message, { id: 'zero-balance' });
                     }
-                } catch (error) {
+                } catch {
                     // Silent fail for background sync
                 }
             }

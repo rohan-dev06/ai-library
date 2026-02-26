@@ -7,9 +7,12 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null); // { username, email, role, ... }
+    const [user, setUser] = useState(() => {
+        const storedUser = sessionStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    }); // { username, email, role, ... }
     const [token, setToken] = useState(sessionStorage.getItem('token'));
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,12 +20,8 @@ export const AuthProvider = ({ children }) => {
             // In a real app, verify token validity with backend here
             // For now, we trust the token exists and maybe decode it if we had a library
             // Since we don't have a /me endpoint yet, we might rely on localStorage user data or just token presence
-            const storedUser = sessionStorage.getItem('user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-                setIsAuthenticated(true);
-            }
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoading(false);
     }, [token]);
 
