@@ -496,9 +496,12 @@ router.get('/dashboard', verifyToken, async (req, res) => {
             recommendations = cachedRecs.recommendations;
         } else {
             // Calculate Fresh Recommendations
+            const issuedIds = issues.map(i => i.bookId);
+            const historyIds = readingHistory.map(r => r.bookId);
+
             let excludeIds = [
-                ...issues.map(i => i.bookId),
-                ...readingHistory.map(r => r.bookId)
+                ...issuedIds,
+                ...historyIds
             ];
 
             // Strategy 1: Based on Top Read Book
@@ -524,10 +527,9 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 }
             }
 
-            // Strategy 2: Based on Issued Books (if no history or not enough recs)
-            if (recommendations.length === 0 && issues.length > 0) {
+            // Strategy 2: Based on Issued Books (if not enough recs)
+            if (recommendations.length < 3 && issues.length > 0) {
                 const lastIssued = issues[issues.length - 1];
-                // Check if book details already in map
                 let topBook = booksMap.get(Number(lastIssued.bookId));
                 if (!topBook) {
                     topBook = await Book.findOne({ id: lastIssued.bookId }).select('tags title');
@@ -536,27 +538,32 @@ router.get('/dashboard', verifyToken, async (req, res) => {
                 if (topBook && topBook.tags && topBook.tags.length > 0) {
                     const similarBooks = await Book.find({
                         tags: { $in: topBook.tags },
-                        id: { $nin: excludeIds }
+                        id: { $nin: [...excludeIds, ...recommendations.map(r => r.bookId)] } // don't duplicate
                     })
                         .select('id title image')
-                        .limit(3);
+                        .limit(3 - recommendations.length);
 
-                    recommendations = similarBooks.map(b => ({
+                    const moreRecs = similarBooks.map(b => ({
                         bookId: b.id,
                         title: b.title,
                         image: b.image,
                         reason: `Because you issued "${topBook.title}"`,
                         score: 8
                     }));
+                    recommendations = [...recommendations, ...moreRecs];
                 }
             }
 
             // Strategy 3: Trending / Random Fallback
+            // If the library is very small, we might have excluded ALL books because the user interacted with them all.
+            // In strategy 3, we relax the 'history' exclusion. We ONLY exclude currently issued books.
             if (recommendations.length < 3) {
+                const relaxedExcludeIds = [...issuedIds, ...recommendations.map(r => r.bookId)];
+
                 const extraBooks = await Book.find({
-                    id: { $nin: [...excludeIds, ...recommendations.map(r => r.bookId)] }
+                    id: { $nin: relaxedExcludeIds }
                 })
-                    .sort({ rating: -1 })
+                    .sort({ rating: -1 }) // Trending
                     .select('id title image rating')
                     .limit(3 - recommendations.length);
 
@@ -575,7 +582,7 @@ router.get('/dashboard', verifyToken, async (req, res) => {
             if (cachedRecs) {
                 cachedRecs.recommendations = recommendations;
                 cachedRecs.updatedAt = now;
-                await cachedRecs.save(); // Async save, don't await if speed is critical? Better await to ensure consistency.
+                await cachedRecs.save();
             } else {
                 await Recommendation.create({
                     userId,
