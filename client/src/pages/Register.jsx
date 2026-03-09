@@ -34,43 +34,43 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-            <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-3xl font-bold mb-6 text-center text-blue-500">
+        <div className="min-h-screen flex items-center justify-center bg-white text-gray-900">
+            <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200 w-full max-w-md">
+                <h2 className="text-3xl font-bold mb-6 text-center text-blue-600">
                     Create Account
                 </h2>
 
                 <form onSubmit={handleRegister} className="space-y-4">
                     <div>
-                        <label className="block mb-1 text-gray-300">Username *</label>
+                        <label className="block mb-1 text-gray-700 font-medium">Username *</label>
                         <input
                             type="text"
                             name="username"
                             value={formData.username}
                             onChange={handleChange}
-                            className="w-full p-2 rounded bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block mb-1 text-gray-300">Email *</label>
+                        <label className="block mb-1 text-gray-700 font-medium">Email *</label>
                         <input
                             type="email"
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full p-2 rounded bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block mb-1 text-gray-300">Password *</label>
+                        <label className="block mb-1 text-gray-700 font-medium">Password *</label>
                         <input
                             type="password"
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            className="w-full p-2 rounded bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                             required
                         />
                     </div>
@@ -78,14 +78,14 @@ const Register = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded transition duration-200 font-semibold disabled:bg-blue-800"
+                        className="w-full py-2 bg-blue-600 text-white hover:bg-blue-700 rounded transition duration-200 font-semibold disabled:bg-blue-400"
                     >
                         {loading ? 'Processing...' : 'Register'}
                     </button>
                 </form>
 
-                <p className="mt-4 text-center text-gray-400">
-                    Already have an account? <Link to="/login" className="text-blue-400 hover:underline">Login</Link>
+                <p className="mt-4 text-center text-gray-600">
+                    Already have an account? <Link to="/login" className="text-blue-600 font-semibold hover:underline">Login</Link>
                 </p>
             </div>
         </div>
