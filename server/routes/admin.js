@@ -132,7 +132,7 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 30 * 1024 * 1024 } // 30MB limit
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit for Free Tier Cloudinary raw files
 });
 
 
@@ -161,10 +161,13 @@ router.post('/add-book', verifyAdmin, upload.single('bookPdf'), async (req, res)
                             public_id: `ebook_${Date.now()}`
                         },
                         (error, result) => {
+                            if (error) {
+                                return reject(error);
+                            }
                             if (result) {
                                 resolve(result);
                             } else {
-                                reject(error);
+                                reject(new Error('Unknown Cloudinary upload error'));
                             }
                         }
                     );

@@ -55,8 +55,8 @@ const AdminDashboard = () => {
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            if (file.size > 30 * 1024 * 1024) {
-                toast.error('File size exceeds 30MB limit');
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error('File size exceeds the 10MB limit (Cloudinary free tier limitation for PDFs).');
                 e.target.value = null; // Reset input
                 return;
             }
@@ -338,7 +338,7 @@ const AdminDashboard = () => {
                                                 <p className="mb-2 text-sm text-gray-600">
                                                     <span className="font-semibold">Click to upload</span> or drag and drop
                                                 </p>
-                                                <p className="text-xs text-gray-500">PDF or EPUB (MAX. 30MB)</p>
+                                                <p className="text-xs text-gray-500">PDF or EPUB (MAX. 10MB)</p>
                                                 {bookData.bookPdf && <p className="mt-2 text-green-600 font-bold">{bookData.bookPdf.name}</p>}
                                             </div>
                                             <input id="dropzone-file" type="file" className="hidden" accept=".pdf,.epub" onChange={handleFileChange} />
