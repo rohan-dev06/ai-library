@@ -98,27 +98,27 @@ const ManageBooks = () => {
     if (loading) return <div className="text-white text-center py-8">Loading books...</div>;
 
     return (
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-white flex items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                     <span className="mr-2">📚</span> Manage Library
                 </h2>
 
                 <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                     <input
                         type="text"
                         placeholder="Search by title, author, ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-gray-700 text-white pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-white text-gray-900 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-gray-300">
-                    <thead className="bg-gray-700/50 text-gray-100 uppercase text-xs font-semibold">
+                <table className="w-full text-left text-gray-700">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold border-b border-gray-200">
                         <tr>
                             <th className="px-4 py-3 rounded-tl-lg">ID</th>
                             <th className="px-4 py-3">Book Cover</th>
@@ -127,12 +127,12 @@ const ManageBooks = () => {
                             <th className="px-4 py-3 text-right rounded-tr-lg">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-700">
+                    <tbody className="divide-y divide-gray-100">
                         {filteredBooks.map((book) => (
-                            <tr key={book.id} className="hover:bg-gray-700/30 transition-colors">
-                                <td className="px-4 py-3 font-mono text-sm">{book.id}</td>
+                            <tr key={book.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 font-mono text-sm text-gray-500">{book.id}</td>
                                 <td className="px-4 py-3">
-                                    <div className="w-12 h-16 rounded overflow-hidden shadow-sm border border-gray-600">
+                                    <div className="w-12 h-16 rounded overflow-hidden shadow-sm border border-gray-200 bg-gray-50">
                                         <img src={book.image} alt={book.title} className="w-full h-full object-cover" />
                                     </div>
                                 </td>
@@ -143,26 +143,26 @@ const ManageBooks = () => {
                                                 name="title"
                                                 value={editForm.title}
                                                 onChange={handleEditChange}
-                                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm focus:border-blue-500 outline-none"
+                                                className="w-full bg-white border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             />
                                             <input
                                                 name="author"
                                                 value={editForm.author}
                                                 onChange={handleEditChange}
-                                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs text-gray-400 focus:border-blue-500 outline-none"
+                                                className="w-full bg-white border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             />
                                             <input
                                                 name="publisher"
                                                 value={editForm.publisher || ''}
                                                 onChange={handleEditChange}
-                                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-xs text-gray-400 focus:border-blue-500 outline-none mt-1"
+                                                className="w-full bg-white border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mt-1"
                                                 placeholder="Publisher"
                                             />
                                         </div>
                                     ) : (
                                         <div>
-                                            <p className="font-semibold text-white">{book.title}</p>
-                                            <p className="text-sm text-gray-400">{book.author}</p>
+                                            <p className="font-semibold text-gray-900">{book.title}</p>
+                                            <p className="text-sm text-gray-500">{book.author}</p>
                                         </div>
                                     )}
                                 </td>
@@ -170,8 +170,8 @@ const ManageBooks = () => {
                                     <button
                                         onClick={() => toggleAvailability(book)}
                                         className={`px-3 py-1 rounded-full text-xs font-medium border ${book.available
-                                            ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                                            : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'} transition-all`}
+                                            ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'
+                                            : 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200'} transition-all`}
                                     >
                                         {book.available ? 'Available' : 'Unavailable'}
                                     </button>
@@ -182,7 +182,7 @@ const ManageBooks = () => {
                                             <button onClick={handleSaveEdit} className="p-2 bg-green-600 text-white rounded hover:bg-green-700" title="Save">
                                                 <Check className="w-4 h-4" />
                                             </button>
-                                            <button onClick={handleCancelEdit} className="p-2 bg-gray-600 text-white rounded hover:bg-gray-500" title="Cancel">
+                                            <button onClick={handleCancelEdit} className="p-2 bg-gray-500 text-white rounded hover:bg-gray-600" title="Cancel">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -190,14 +190,14 @@ const ManageBooks = () => {
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => handleEditClick(book)}
-                                                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 title="Edit"
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(book.id)}
-                                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Delete"
                                             >
                                                 <Trash2 className="w-4 h-4" />

@@ -49,44 +49,44 @@ const ManageReviews = () => {
     );
 
     return (
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                     <span>⭐</span> Manage Reviews
                 </h2>
                 <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                     <input
                         type="text"
                         placeholder="Search user, comment, book ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 w-full md:w-64"
+                        className="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full md:w-64"
                     />
                 </div>
             </div>
 
             {loading ? (
-                <div className="text-center text-gray-400 py-8">Loading reviews...</div>
+                <div className="text-center text-gray-500 py-8">Loading reviews...</div>
             ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-gray-700 text-gray-400 text-sm">
-                                <th className="pb-3 pl-4">Book ID</th>
-                                <th className="pb-3">User</th>
-                                <th className="pb-3">Rating</th>
-                                <th className="pb-3 w-1/3">Comment</th>
-                                <th className="pb-3">Date</th>
-                                <th className="pb-3 text-right pr-4">Action</th>
+                            <tr className="border-b border-gray-200 text-gray-600 text-sm bg-gray-50 uppercase font-semibold">
+                                <th className="py-3 pl-4 rounded-tl-lg">Book ID</th>
+                                <th className="py-3">User</th>
+                                <th className="py-3">Rating</th>
+                                <th className="py-3 w-1/3">Comment</th>
+                                <th className="py-3">Date</th>
+                                <th className="py-3 text-right pr-4 rounded-tr-lg">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-700">
+                        <tbody className="divide-y divide-gray-100">
                             {filteredReviews.length > 0 ? (
                                 filteredReviews.map((review) => (
-                                    <tr key={review._id} className="hover:bg-gray-700/50 transition-colors">
-                                        <td className="py-4 pl-4 text-blue-400 font-medium">#{review.bookId}</td>
-                                        <td className="py-4 text-gray-300">
+                                    <tr key={review._id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="py-4 pl-4 text-blue-600 font-medium">#{review.bookId}</td>
+                                        <td className="py-4 text-gray-900">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold">{review.username}</span>
                                             </div>
@@ -96,12 +96,12 @@ const ManageReviews = () => {
                                                 {[...Array(5)].map((_, i) => (
                                                     <Star
                                                         key={i}
-                                                        className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`}
+                                                        className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
                                                     />
                                                 ))}
                                             </div>
                                         </td>
-                                        <td className="py-4 text-gray-400 text-sm truncate max-w-xs" title={review.comment}>
+                                        <td className="py-4 text-gray-600 text-sm truncate max-w-xs" title={review.comment}>
                                             {review.comment}
                                         </td>
                                         <td className="py-4 text-gray-500 text-xs">
@@ -110,7 +110,7 @@ const ManageReviews = () => {
                                         <td className="py-4 text-right pr-4">
                                             <button
                                                 onClick={() => handleDelete(review._id)}
-                                                className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                                                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                                                 title="Delete Review"
                                             >
                                                 <Trash2 className="w-4 h-4" />

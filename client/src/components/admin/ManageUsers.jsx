@@ -64,9 +64,9 @@ const ManageUsers = () => {
     if (loading) return <div className="text-white text-center py-8">Loading users...</div>;
 
     return (
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-white flex items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                     <span className="mr-2">👥</span> User Management
                 </h2>
 
@@ -77,14 +77,14 @@ const ManageUsers = () => {
                         placeholder="Search users..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-gray-700 text-white pl-10 pr-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:border-blue-500"
+                        className="w-full bg-white text-gray-900 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-left text-gray-300">
-                    <thead className="bg-gray-700/50 text-gray-100 uppercase text-xs font-semibold">
+                <table className="w-full text-left text-gray-700">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold border-b border-gray-200">
                         <tr>
                             <th className="px-4 py-3 rounded-tl-lg">User</th>
                             <th className="px-4 py-3">Role</th>
@@ -94,44 +94,44 @@ const ManageUsers = () => {
                             <th className="px-4 py-3 text-right rounded-tr-lg">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-700">
+                    <tbody className="divide-y divide-gray-100">
                         {filteredUsers.map((user) => {
                             const status = getUserStatus(user.lastActive);
                             return (
-                                <tr key={user._id} className="hover:bg-gray-700/30 transition-colors">
+                                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-4 py-3">
                                         <div className="flex items-center">
                                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs mr-3">
                                                 {user.username.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-white">{user.username}</p>
-                                                <p className="text-xs text-gray-400">{user.email}</p>
+                                                <p className="font-semibold text-gray-900">{user.username}</p>
+                                                <p className="text-xs text-gray-500">{user.email}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className={`px-2 py-1 rounded text-xs font-medium border ${user.role === 'admin'
-                                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                                            : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                            ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                            : 'bg-blue-100 text-blue-700 border-blue-200'
                                             }`}>
                                             {user.role}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 font-mono text-amber-400">
+                                    <td className="px-4 py-3 font-mono text-yellow-600 font-medium">
                                         {user.coins} 🪙
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col gap-1">
                                             <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium w-fit ${status === 'Active'
-                                                ? 'bg-emerald-500/10 text-emerald-400'
-                                                : 'bg-gray-600/30 text-gray-400'
+                                                ? 'bg-emerald-100 text-emerald-700'
+                                                : 'bg-gray-100 text-gray-600'
                                                 }`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'Active' ? 'bg-emerald-400 animate-pulse' : 'bg-gray-400'}`}></span>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
                                                 {status}
                                             </span>
                                             {user.isBlocked && (
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 w-fit">
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 w-fit">
                                                     BLOCKED
                                                 </span>
                                             )}
