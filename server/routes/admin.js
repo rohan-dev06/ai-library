@@ -287,6 +287,7 @@ router.put('/book/:id', verifyAdmin, async (req, res) => {
 
 // Get All Reviews
 const Review = require('../models/Review');
+const BookIssue = require('../models/BookIssue');
 
 router.get('/reviews', verifyAdmin, async (req, res) => {
     try {
@@ -307,6 +308,114 @@ router.delete('/reviews/:id', verifyAdmin, async (req, res) => {
     } catch (error) {
         console.error('Delete Review Error:', error);
         res.status(500).json({ message: 'Server error deleting review' });
+    }
+});
+
+// ========================
+// Admin Report Route
+// ========================
+router.get('/report', verifyAdmin, async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const start = startDate ? new Date(startDate) : new Date('2000-01-01');
+        const end = endDate ? new Date(endDate) : new Date();
+        end.setHours(23, 59, 59, 999); // include full end day
+
+        // 1. User List
+        const users = await User.find({ role: { $ne: 'admin' } }, '-password').sort({ createdAt: 1 });
+
+        // 2. Book List
+        const books = await Book.find().populate('author').sort({ id: 1 });
+        const formattedBooks = books.map(b => ({
+            id: b.id,
+            title: b.title,
+            author: b.author ? b.author.name : 'Unknown',
+            publisher: b.author ? b.author.publisher : '',
+            bookType: b.bookType,
+            available: b.available,
+            language: b.language,
+            pages: b.pages
+        }));
+
+        // 3. User-wise Issue List (filtered by issueDate in range)
+        const issues = await BookIssue.find({
+            issueDate: { $gte: start, $lte: end }
+        }).populate('userId', 'username email').sort({ issueDate: -1 });
+
+        // Batch fetch book titles for issues
+        const issueBookIds = [...new Set(issues.map(i => i.bookId))];
+        const issueBooksMap = new Map();
+        if (issueBookIds.length > 0) {
+            const issueBooks = await Book.find({ id: { $in: issueBookIds } }).select('id title');
+            issueBooks.forEach(b => issueBooksMap.set(b.id, b.title));
+        }
+
+        // Group issues by user
+        const issuesByUser = {};
+        issues.forEach(issue => {
+            const userName = issue.userId ? issue.userId.username : 'Unknown';
+            const userEmail = issue.userId ? issue.userId.email : '';
+            const key = userName;
+            if (!issuesByUser[key]) {
+                issuesByUser[key] = { username: userName, email: userEmail, issues: [] };
+            }
+            issuesByUser[key].issues.push({
+                bookTitle: issueBooksMap.get(issue.bookId) || `Book #${issue.bookId}`,
+                issueDate: issue.issueDate,
+                dueDate: issue.dueDate,
+                returnDate: issue.returnDate || null,
+                status: issue.status,
+                fine: issue.fine || 0
+            });
+        });
+
+        // 4. User-wise Penalty List
+        const allIssues = await BookIssue.find({ fine: { $gt: 0 } }).populate('userId', 'username email');
+        const penaltyByUser = {};
+        allIssues.forEach(issue => {
+            const userName = issue.userId ? issue.userId.username : 'Unknown';
+            const userEmail = issue.userId ? issue.userId.email : '';
+            if (!penaltyByUser[userName]) {
+                penaltyByUser[userName] = { username: userName, email: userEmail, totalFine: 0, paidFine: 0 };
+            }
+            penaltyByUser[userName].totalFine += issue.fine || 0;
+            if (issue.isFinePaid) penaltyByUser[userName].paidFine += issue.fine || 0;
+        });
+
+        // 5. Monthly/Yearly Income (PURCHASE payments with positive amount, in range)
+        const incomePayments = await Payment.find({
+            date: { $gte: start, $lte: end },
+            type: 'PURCHASE',
+            amount: { $gt: 0 },
+            status: 'success'
+        });
+
+        const incomeByMonth = {};
+        incomePayments.forEach(p => {
+            const d = new Date(p.date);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!incomeByMonth[key]) incomeByMonth[key] = { month: key, total: 0, count: 0 };
+            incomeByMonth[key].total += p.amount;
+            incomeByMonth[key].count += 1;
+        });
+
+        const monthlyIncome = Object.values(incomeByMonth).sort((a, b) => a.month.localeCompare(b.month));
+        const totalIncome = monthlyIncome.reduce((sum, m) => sum + m.total, 0);
+
+        res.json({
+            reportPeriod: { startDate: start, endDate: end },
+            users,
+            books: formattedBooks,
+            issuesByUser: Object.values(issuesByUser),
+            penaltyByUser: Object.values(penaltyByUser),
+            monthlyIncome,
+            totalIncome
+        });
+
+    } catch (error) {
+        console.error('Report Error:', error);
+        res.status(500).json({ message: 'Failed to generate report' });
     }
 });
 

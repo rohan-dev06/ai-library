@@ -8,6 +8,7 @@ import ManageBooks from '../components/admin/ManageBooks';
 import ManageUsers from '../components/admin/ManageUsers';
 import PaymentHistory from '../components/admin/PaymentHistory';
 import ManageReviews from '../components/admin/ManageReviews';
+import ReportPage from '../components/admin/ReportPage';
 
 const AdminDashboard = () => {
     const { token, user } = useAuth();
@@ -181,6 +182,15 @@ const AdminDashboard = () => {
                     >
                         <span className="mr-2">⭐</span> Reviews
                     </button>
+                    <button
+                        onClick={() => setActiveTab('reports')}
+                        className={`whitespace-nowrap px-4 md:px-6 py-2 rounded-lg font-medium transition-all text-sm md:text-base ${activeTab === 'reports'
+                            ? 'bg-green-600 text-white shadow-lg shadow-green-500/30'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <span className="mr-2">📊</span> Reports
+                    </button>
                 </div>
 
                 {activeTab === 'manage' ? (
@@ -191,6 +201,8 @@ const AdminDashboard = () => {
                     <PaymentHistory />
                 ) : activeTab === 'reviews' ? (
                     <ManageReviews />
+                ) : activeTab === 'reports' ? (
+                    <ReportPage />
                 ) : (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
                         <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-800">
